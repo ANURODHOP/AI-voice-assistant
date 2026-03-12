@@ -1,0 +1,41 @@
+/* src/index.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Add these keyframes for animations */
+
+@keyframes wave {
+  0%, 100% { transform: scaleY(0.4); }
+  50%      { transform: scaleY(1.0); }
+}
+
+.animate-wave {
+  animation: wave 1.2s infinite ease-in-out;
+}
+
+@keyframes ping-slow {
+  75%, 100% { transform: scale(1.6); opacity: 0; }
+}
+
+.animate-ping-slow {
+  animation: ping-slow 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-ping-slower {
+  animation: ping-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
