@@ -3,42 +3,23 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
-/* ---------- paths ---------- */
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const INPUT_EXCEL = path.join(__dirname, "data", "raw_bmsce.xlsx");
 const OUTPUT_JSON = path.join(__dirname, "data", "brain_data.json");
 
-/* ---------- CONFIG ---------- */
+const MIN_TEXT_LENGTH = 150;  // ✅ Lowered from 200
+const CHUNK_SIZE = 800;        // ✅ Increased from 700
+const CHUNK_OVERLAP = 150;     // ✅ Increased from 100
 
-const MIN_TEXT_LENGTH = 200;
-const CHUNK_SIZE = 700;
-const CHUNK_OVERLAP = 100;
-
+// ✅ MINIMAL boilerplate removal
 const BOILERPLATE_PATTERNS = [
-  "© bms college of engineering",
-  "bms college of engineering",
-  "all rights reserved",
-  "follow us on",
-  "quick links",
-  "contact us",
-  "privacy policy",
+  "© bms college of engineering. all rights reserved",
   "powered by",
 ];
 
-const JUNK_KEYWORDS = [
-  "event",
-  "workshop",
-  "seminar",
-  "conference",
-  "poster",
-  "invitation",
-  "celebration",
-];
-
-/* ---------- helpers ---------- */
+// ✅ REMOVED junk keywords - events/workshops ARE valuable!
 
 function normalizeText(text) {
   return text
@@ -48,22 +29,11 @@ function normalizeText(text) {
 }
 
 function removeBoilerplate(text) {
-  let t = text.toLowerCase();
+  let t = text;
   for (const phrase of BOILERPLATE_PATTERNS) {
     t = t.replaceAll(phrase, "");
   }
   return t.trim();
-}
-
-function normalizeVersions(text) {
-  return text.replace(
-    /\b(v|version)[\s\-]*([0-9]+)/gi,
-    (_, __, num) => `VERSION_${num}`
-  );
-}
-
-function isJunk(text) {
-  return JUNK_KEYWORDS.some(k => text.includes(k));
 }
 
 function chunkText(text, size, overlap) {
@@ -83,8 +53,6 @@ function chunkText(text, size, overlap) {
 
   return chunks;
 }
-
-/* ---------- EXPORT THIS ---------- */
 
 export default async function runPreprocess() {
   if (!fs.existsSync(INPUT_EXCEL)) {
@@ -107,12 +75,11 @@ export default async function runPreprocess() {
 
     let text = normalizeText(row.raw_text);
     text = removeBoilerplate(text);
-    text = normalizeVersions(text);
 
     if (text.length < MIN_TEXT_LENGTH) continue;
-    if (isJunk(text)) continue;
 
-    const fingerprint = text.slice(0, 250);
+    // ✅ Simple deduplication (first 300 chars)
+    const fingerprint = text.slice(0, 300);
     if (seenHashes.has(fingerprint)) continue;
     seenHashes.add(fingerprint);
 
@@ -129,12 +96,9 @@ export default async function runPreprocess() {
     });
   }
 
-  fs.writeFileSync(
-    OUTPUT_JSON,
-    JSON.stringify(brainData, null, 2),
-    "utf-8"
-  );
+  fs.writeFileSync(OUTPUT_JSON, JSON.stringify(brainData, null, 2), "utf-8");
 
   console.log("✅ Preprocessing complete");
-  console.log("🧠 Brain chunks:", brainData.length);
+  console.log(`🧠 Brain chunks: ${brainData.length}`);
+  console.log(`📄 From ${rows.length} raw pages`);
 }
